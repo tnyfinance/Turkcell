@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gülizar YİĞİT - Tarife Hesaplama ve Liste Portalı</title>
+    <style>
+        /* GENEL AYARLAR */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #FFE4E1; /* Ortak açık pembe arka plan */
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* SEKME (TAB) BUTONLARI */
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 850px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: #fff;
+            color: #444;
+            font-weight: bold;
+            font-size: 13px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .tab-btn:hover {
+            background: #f0f0f0;
+        }
+        .tab-btn.active {
+            background: #1a73e8; /* Aktif sekme mavi */
+            color: white;
+            box-shadow: 0 4px 10px rgba(26, 115, 232, 0.4);
+        }
+
+        .tab-content {
+            display: none; /* Varsayılan olarak gizli */
+            width: 100%;
+            max-width: 500px;
+            animation: fadeIn 0.4s ease-in-out;
+            padding-bottom: 50px;
+        }
+        .tab-content.active {
+            display: block; /* Sadece aktif sekme görünür */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* TAB 1: İŞTE TARİFE HESAPLAMA ŞABLONU CSS */
+        .t1-header { background-color: #DE350B; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .t1-header-title { text-align: center; color: #FFFFFF; margin: 0; font-size: 18px; font-weight: 800; text-transform: uppercase; }
+        .t1-card { background: #FFFFFF; border-radius: 12px; padding: 8px 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .t1-table { width: 100%; border-collapse: collapse; }
+        .t1-table td { padding: 10px 0; border-bottom: 1px solid #EBECF0; }
+        .t1-tarife-ad { font-weight: 600; font-size: 13px; text-transform: uppercase; } 
+        .t1-fiyat-etiket { color: #00875A; font-weight: bold; font-size: 12px; background: #E3FCEF; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 3px; }
+        .t1-input { width: 55px; padding: 6px; border: 2px solid #DFE1E6; border-radius: 6px; text-align: center; font-weight: bold; font-size: 13px; }
+        .t1-box { padding: 12px 15px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; color: white; font-weight: bold; }
+        .t1-label { text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; } 
+        .t1-value { font-size: 16px; }
+        .t1-hat-box { background-color: #FF8B00; }
+        .t1-indirimsiz-box { background-color: #6554C0; }
+        .t1-indirimli-box { background-color: #00875A; }
+        .t1-discount-input-box { background: #EBECF0; color: #172B4D; border: 1px dashed #C1C7D0; }
+        .t1-yillik-box { background-color: #DE350B; padding: 18px; margin-top: 10px; flex-direction: column; gap: 5px; }
+        .t1-yillik-box .t1-value { font-size: 24px; font-weight: 900; }
+
+        /* TAB 2: TEKLİ HESAPLAMA CSS */
+        .t2-container-inner { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .t2-h2 { text-align: center; color: white; background-color: #1a73e8; margin-top: 0; margin-bottom: 20px; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: 800;}
+        .t2-form-group { margin-bottom: 20px; }
+        .t2-label { display: block; margin-bottom: 8px; font-weight: bold; color: #444; }
+        .t2-select, .t2-range { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .t2-result-box { margin-top: 25px; padding: 20px; background: #e7f3ff; border-radius: 10px; text-align: center; border: 1px solid #1a73e8; }
+        .t2-result-label { font-size: 14px; color: #555; }
+        .t2-result-value { font-size: 32px; font-weight: bold; color: #1a73e8; margin: 10px 0; }
+        .t2-info { font-size: 14px; color: #777; text-align: center; margin-top: 15px; }
+        .t2-pct-val { font-weight: bold; color: #1a73e8; font-size: 18px; }
+
+        /* TAB 3: LİSTE CSS */
+        .t3-container-inner { background: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; max-width: 600px; margin: 0 auto; }
+        .t3-header { background-color: #64b5f6; color: white; text-align: center; padding: 20px; font-size: 20px; font-weight: bold; text-transform: uppercase;}
+        .t3-menu-btn { width: 100%; background-color: #333; color: white; padding: 15px 20px; font-size: 16px; text-align: left; border: none; outline: none; cursor: pointer; transition: background 0.3s; border-bottom: 1px solid #444; font-weight: 500; }
+        .t3-menu-btn:hover { background-color: #555; }
+        .t3-menu-btn::after { content: '\25BC'; float: right; font-size: 14px; margin-top: 4px; }
+        .t3-acc-content { display: none; background-color: #fafafa; padding: 10px 25px 25px 25px; }
+        .t3-category-title { color: #1976d2; border-bottom: 2px solid #1976d2; padding-bottom: 5px; margin-top: 25px; font-size: 18px; }
+        .t3-ul { list-style-type: none; padding: 0; margin: 0; }
+        .t3-li { padding: 12px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .t3-li:last-child { border-bottom: none; }
+        .t3-package-info { display: flex; flex-direction: column; padding-right: 15px; }
+        .t3-package-name { font-weight: bold; font-size: 14px; }
+        .t3-package-details { font-size: 12px; color: #666; margin-top: 4px; line-height: 1.4; }
+        .t3-price { font-weight: bold; color: #1565c0; background: #e3f2fd; padding: 6px 12px; border-radius: 6px; min-width: 60px; text-align: center; font-size: 14px;}
+
+        /* TAB 4: İNDİRİM ORANI HESAPLAMA CSS */
+        .t4-container-inner { background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; padding-bottom: 20px; margin: 0 auto; max-width: 350px; }
+        .t4-h2 { background-color: red; color: white; text-align: center; margin: 0 0 15px 0; padding: 15px; font-size: 18px; font-weight: 800; }
+        .t4-form-group { margin: 15px 20px; display: flex; flex-direction: column; }
+        .t4-label { padding: 8px; font-weight: bold; text-align: center; border-radius: 4px; margin-bottom: 5px; display: block;}
+        .t4-label.pink-bg { background-color: lightpink; }
+        .t4-label.blue-bg { background-color: lightblue; }
+        .t4-input { padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; text-align: center; box-sizing: border-box; width: 100%;}
+        .t4-result-box { padding: 10px; font-size: 24px; font-weight: bold; text-align: center; color: #333; border: 1px dashed #ccc; border-radius: 4px; background-color: #f9f9f9; }
+
+        /* ORTAK FOOTER */
+        .footer { position: fixed; bottom: 10px; right: 15px; font-size: 12px; color: #5E6C84; text-align: right; font-weight: bold; font-style: italic; background: rgba(255, 255, 255, 0.7); padding: 5px 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="tab-container">
+        <button class="tab-btn active" onclick="openTab('tab1', this)">İŞTE TARİFE HESAPLAMA</button>
+        <button class="tab-btn" onclick="openTab('tab2', this)">İŞTE TARİFE FİYATLARI</button>
+        <button class="tab-btn" onclick="openTab('tab3', this)">İŞTE HESAPLI TARİFE FİYATLARI</button>
+        <button class="tab-btn" onclick="openTab('tab4', this)">İNDİRİM ORANI HESAPLAMA</button>
+    </div>
+
+    <div id="tab1" class="tab-content active">
+        <div class="t1-header">
+            <h2 class="t1-header-title">İŞTE TARİFE HESAPLAMA ŞABLONU</h2>
+        </div>
+
+        <div class="t1-card">
+            <table class="t1-table">
+                <tbody id="t1-liste"></tbody>
+            </table>
+        </div>
+
+        <div class="t1-box t1-hat-box">
+            <span class="t1-label">TOPLAM HAT ADEDİ</span>
+            <span class="t1-value" id="tHat">0</span>
+        </div>
+
+        <div class="t1-box t1-discount-input-box">
+            <span class="t1-label" style="color:#172B4D">İNDİRİM ORANI (%)</span>
+            <input type="number" class="t1-input" id="indirim" value="77" oninput="t1_hesapla()">
+        </div>
+
+        <div class="t1-box t1-indirimsiz-box">
+            <span class="t1-label">AYLIK İNDİRİMSİZ FİYAT</span>
+            <span class="t1-value" id="tAy">0,00 TL</span>
+        </div>
+
+        <div class="t1-box t1-indirimli-box">
+            <span class="t1-label">AYLIK İNDİRİMLİ FİYAT</span>
+            <span class="t1-value" id="tInd">0,00 TL</span>
+        </div>
+
+        <div class="t1-box t1-yillik-box">
+            <span class="t1-label" style="color:#fff">YILLIK NET TOPLAM İNDİRİM</span>
+            <span class="t1-value" id="tYil">0,00 TL</span>
+        </div>
+    </div>
+
+    <div id="tab2" class="tab-content">
+        <div class="t2-container-inner">
+            <h2 class="t2-h2">TARİFE FİYATI HESAPLA</h2>
+            
+            <div class="t2-form-group">
+                <label class="t2-label" for="tarife">Tarife Paketi Seçin:</label>
+                <select class="t2-select" id="tarife" onchange="t2_calculate()">
+                </select>
+            </div>
+
+            <div class="t2-form-group" style="text-align: center;">
+                <label class="t2-label">Oran: <span class="t2-pct-val" id="pctValue">85</span></label>
+                <input type="range" class="t2-range" id="pctSlider" min="65" max="85" value="85" step="1" oninput="t2_updatePctLabel(); t2_calculate();">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: #888; padding: 0 5px;">
+                    <span>65</span>
+                    <span>75</span>
+                    <span>85</span>
+                </div>
+            </div>
+
+            <div class="t2-result-box">
+                <div id="basePriceLabel" style="font-size: 14px; margin-bottom: 5px; color: #666;"></div>
+                <div class="t2-result-label">Hesaplanan Tutar:</div>
+                <div class="t2-result-value" id="finalPrice">0.00 TL</div>
+            </div>
+
+            <div class="t2-info">
+                Bu uygulama tablo verilerine göre anlık hesaplama yapar.
+            </div>
+        </div>
+    </div>
+
+    <div id="tab3" class="tab-content" style="max-width: 700px;">
+        <div class="t3-container-inner">
+            <div class="t3-header">Güncel Fiyat Listesi</div>
+
+            <button class="t3-menu-btn" onclick="t3_toggleMenu('yeni')">Yeni Müşteriler İçin</button>
+            <div id="yeni" class="t3-acc-content">
+                
+                <h3 class="t3-category-title">İşte Hesaplı (Yeni Paketler)</h3>
+                <ul class="t3-ul">
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 1 Yeni</span>
+                            <span class="t3-package-details">1000 DK + 100 SMS + 1 GB</span>
+                        </div>
+                        <span class="t3-price">440 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 5 Yeni</span>
+                            <span class="t3-package-details">1500 DK + 100 SMS + 5 GB</span>
+                        </div>
+                        <span class="t3-price">520 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 10 Yeni</span>
+                            <span class="t3-package-details">2000 DK + 100 SMS + 10 GB</span>
+                        </div>
+                        <span class="t3-price">650 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 20 Yeni</span>
+                            <span class="t3-package-details">2000 DK + 100 SMS + 20 GB</span>
+                        </div>
+                        <span class="t3-price">845 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 40 Yeni</span>
+                            <span class="t3-package-details">Sınırsız DK + 100 SMS + 20 GB<br>+ Sosyal Medyada 20 GB</span>
+                        </div>
+                        <span class="t3-price">1105 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı Platin 60 Yeni</span>
+                            <span class="t3-package-details">5000 DK + 100 SMS + 30 GB<br>+ Sosyal Medyada 30 GB</span>
+                        </div>
+                        <span class="t3-price">1200 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı Platin Black 80 Yeni</span>
+                            <span class="t3-package-details">5000 DK + 100 SMS + 40 GB<br>+ Sosyal Medyada 40 GB</span>
+                        </div>
+                        <span class="t3-price">1300 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı Platin Black 100 Yeni</span>
+                            <span class="t3-package-details">5000 DK + 100 SMS + 50 GB<br>+ Sosyal Medyada 50 GB</span>
+                        </div>
+                        <span class="t3-price">1400 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı Platin Black 200 Yeni</span>
+                            <span class="t3-package-details">5000 DK + 100 SMS + 100 GB<br>+ Sosyal Medyada 100 GB</span>
+                        </div>
+                        <span class="t3-price">2200 TL</span>
+                    </li>
+                </ul>
+
+                <h3 class="t3-category-title">İşte Hesaplı Star</h3>
+                <ul class="t3-ul">
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 10 Star</span>
+                            <span class="t3-package-details">2000 DK + 100 SMS + 10 GB</span>
+                        </div>
+                        <span class="t3-price">400 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 20 Star</span>
+                            <span class="t3-package-details">2000 DK + 100 SMS + 20 GB</span>
+                        </div>
+                        <span class="t3-price">500 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 40 Star</span>
+                            <span class="t3-package-details">3000 DK + 100 SMS + 40 GB</span>
+                        </div>
+                        <span class="t3-price">700 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 60 Star</span>
+                            <span class="t3-package-details">5000 DK + 100 SMS + 60 GB</span>
+                        </div>
+                        <span class="t3-price">800 TL</span>
+                    </li>
+                </ul>
+
+                <h3 class="t3-category-title">İşte Hesaplı Avantaj</h3>
+                <ul class="t3-ul">
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 10 Avantaj</span>
+                            <span class="t3-package-details">2000 DK + 100 SMS + 10 GB</span>
+                        </div>
+                        <span class="t3-price">250 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 20 Avantaj</span>
+                            <span class="t3-package-details">2000 DK + 100 SMS + 20 GB</span>
+                        </div>
+                        <span class="t3-price">320 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 40 Avantaj</span>
+                            <span class="t3-package-details">3000 DK + 100 SMS + 40 GB</span>
+                        </div>
+                        <span class="t3-price">400 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı 60 Avantaj</span>
+                            <span class="t3-package-details">5000 DK + 100 SMS + 60 GB</span>
+                        </div>
+                        <span class="t3-price">500 TL</span>
+                    </li>
+                    <li class="t3-li">
+                        <div class="t3-package-info">
+                            <span class="t3-package-name">İşte Hesaplı Platin Black 100 Avantaj</span>
+                            <span class="t3-package-details">5000 DK + 100 SMS + 50 GB<br>+ Sosyal Medyada 50 GB</span>
+                        </div>
+                        <span class="t3-price">600 TL</span>
+                    </li>
+                </ul>
+            </div>
+
+            <button class="t3-menu-btn" onclick="t3_toggleMenu('mevcut')">Mevcut Müşteriler İçin</button>
+            <div id="mevcut" class="t3-acc-content">
+                
+                <h3 class="t3-category-title">İşte Hesaplı Standart</h3>
+                <ul class="t3-ul">
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 1</span> <span class="t3-price">380 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 2</span> <span class="t3-price">410 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 4</span> <span class="t3-price">465 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 6</span> <span class="t3-price">485 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 8</span> <span class="t3-price">550 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 10</span> <span class="t3-price">615 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 15</span> <span class="t3-price">775 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 20</span> <span class="t3-price">930 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 25</span> <span class="t3-price">1080 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 30</span> <span class="t3-price">1190 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 50</span> <span class="t3-price">1350 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin Black 80</span> <span class="t3-price">1745 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin Black 100</span> <span class="t3-price">1900 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin Black 200</span> <span class="t3-price">2670 TL</span></li>
+                </ul>
+
+                <h3 class="t3-category-title">İşte Hesaplı Ultra</h3>
+                <ul class="t3-ul">
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 1 Ultra</span> <span class="t3-price">375 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 2 Ultra</span> <span class="t3-price">380 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 4 Ultra</span> <span class="t3-price">405 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 6 Ultra</span> <span class="t3-price">435 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 8 Ultra</span> <span class="t3-price">485 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 10 Ultra</span> <span class="t3-price">515 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 15 Ultra</span> <span class="t3-price">640 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 20 Ultra</span> <span class="t3-price">730 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 25 Ultra</span> <span class="t3-price">885 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 30 Ultra</span> <span class="t3-price">1070 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 50 Ultra</span> <span class="t3-price">1135 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin Black 80 Ultra</span> <span class="t3-price">1535 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin Black 100 Ultra</span> <span class="t3-price">1720 TL</span></li>
+                </ul>
+
+                <h3 class="t3-category-title">İşte Hesaplı Fırsat</h3>
+                <ul class="t3-ul">
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 1 Fırsat</span> <span class="t3-price">365 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 2 Fırsat</span> <span class="t3-price">375 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 4 Fırsat</span> <span class="t3-price">390 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 6 Fırsat</span> <span class="t3-price">425 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 8 Fırsat</span> <span class="t3-price">465 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 10 Fırsat</span> <span class="t3-price">495 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 15 Fırsat</span> <span class="t3-price">565 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 20 Fırsat</span> <span class="t3-price">630 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 25 Fırsat</span> <span class="t3-price">810 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 30 Fırsat</span> <span class="t3-price">895 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 50 Fırsat</span> <span class="t3-price">995 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin Black 80 Fırsat</span> <span class="t3-price">1150 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin Black 100 Fırsat</span> <span class="t3-price">1255 TL</span></li>
+                </ul>
+
+                <h3 class="t3-category-title">İşte Hesaplı Kontratsız</h3>
+                <ul class="t3-ul">
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Eko</span> <span class="t3-price">595 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 1</span> <span class="t3-price">660 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 2</span> <span class="t3-price">685 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 4</span> <span class="t3-price">735 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 5</span> <span class="t3-price">770 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 6</span> <span class="t3-price">785 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 8</span> <span class="t3-price">885 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 10</span> <span class="t3-price">970 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 15</span> <span class="t3-price">1195 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 20</span> <span class="t3-price">1315 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 25</span> <span class="t3-price">1445 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 30</span> <span class="t3-price">1610 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı 40</span> <span class="t3-price">1750 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 50</span> <span class="t3-price">1925 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin 60</span> <span class="t3-price">2030 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin Black 80</span> <span class="t3-price">2445 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin Black 100</span> <span class="t3-price">2705 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin Black 150</span> <span class="t3-price">3105 TL</span></li>
+                    <li class="t3-li"><span class="t3-package-name">İşte Hesaplı Platin Black 200</span> <span class="t3-price">3550 TL</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab4" class="tab-content">
+        <div class="t4-container-inner">
+            <h2 class="t4-h2">İNDİRİM ORANI HESAPLAMA</h2>
+
+            <div class="t4-form-group">
+                <label class="t4-label pink-bg" for="t4-tarife">Tarife Fiyatı</label>
+                <input type="number" id="t4-tarife" class="t4-input" placeholder="Örn: 1000" min="0">
+            </div>
+
+            <div class="t4-form-group">
+                <label class="t4-label pink-bg" for="t4-indirim">İndirim Tutarı</label>
+                <input type="number" id="t4-indirim" class="t4-input" placeholder="Örn: 200" min="0">
+            </div>
+
+            <div class="t4-form-group">
+                <label class="t4-label blue-bg">İndirim Oranı</label>
+                <div class="t4-result-box" id="t4-sonuc">% 0.00</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Tüm Hakları Saklıdır. Designed by Gülizar YİĞİT
+    </div>
+
+    <script>
+        // --- SEKME (TAB) YÖNETİMİ ---
+        function openTab(tabName, btnElement) {
+            // Tüm sekmeleri gizle
+            const tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove("active");
+            }
+            // Tüm butonların aktiflik durumunu kaldır
+            const tabBtns = document.getElementsByClassName("tab-btn");
+            for (let i = 0; i < tabBtns.length; i++) {
+                tabBtns[i].classList.remove("active");
+            }
+            // Seçilen sekmeyi göster ve butonunu aktif yap
+            document.getElementById(tabName).classList.add("active");
+            btnElement.classList.add("active");
+        }
+
+        // --- TAB 1: TOPLU HESAPLAMA MANTIĞI ---
+        const t1_veriler = [
+            ["İŞTE TARİFE", 60], ["İŞTE SÜPER 2", 1330], ["İŞTE SÜPER 4", 1650], ["İŞTE SÜPER 6", 2100],
+            ["İŞTE SÜPER PLATİN 8", 2700], ["İŞTE SÜPER PLATİN 10", 3100], ["İŞTE SÜPER PLATİN 15", 3900],
+            ["İŞTE SÜPER PLATİN 20", 4300], ["İŞTE SÜPER PLATİN BLACK 30", 5050], ["İŞTE SÜPER PLATİN BLACK 50", 7200],
+            ["İŞTE SÜPER PLATİN BLACK 100", 8400], ["İŞTE SÜPER PLATİN BLACK 150", 8000], ["LİFECELL 5GB", 745],
+            ["LİFECELL 10GB", 1000], ["LİFECELL 15GB", 1135], ["LİFECELL 25GB", 1400], ["LİFECELL 50GB", 2000],
+            ["LİFECELL 100GB", 2930], ["STANDART ARAÇ", 99], ["BOŞ", 1]
+        ];
+
+        const t1_liste = document.getElementById('t1-liste');
+        t1_veriler.forEach(v => {
+            t1_liste.innerHTML += `<tr>
+                <td>
+                    <div class="t1-tarife-ad">${v[0]}</div>
+                    <div class="t1-fiyat-etiket">${v[1]} TL</div>
+                </td>
+                <td style="text-align:right">
+                    <input type="number" class="t1-input t1-adet" data-fiyat="${v[1]}" value="0" min="0" oninput="t1_hesapla()">
+                </td>
+            </tr>`;
+        });
+
+        function t1_hesapla() {
+            let hat = 0, toplam = 0;
+            const indirim = parseFloat(document.getElementById('indirim').value) || 0;
+            document.querySelectorAll('.t1-adet').forEach(i => {
+                const a = parseInt(i.value) || 0;
+                hat += a;
+                toplam += a * parseFloat(i.dataset.fiyat);
+            });
+            const indirimli = toplam * (1 - (indirim / 100));
+            document.getElementById('tHat').innerText = hat;
+            document.getElementById('tAy').innerText = toplam.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + " TL";
+            document.getElementById('tInd').innerText = indirimli.toLocaleString('tr-TR', {minimumFractionDigits: 2}) + " TL";
+            document.getElementById('tYil').innerText = (indirimli * 12).toLocaleString('tr-TR', {minimumFractionDigits: 2}) + " TL";
+        }
+
+        // --- TAB 2: TEKLİ TARİFE MANTIĞI ---
+        const t2_data = [
+            {"TARİFE PAKETLER":"İŞTE SÜPER 2","FİYAT":"1330","85":199.5,"84":212.8,"83":226.1,"82":239.4,"81":252.7,"80":266.0,"79":279.3,"78":292.6,"77":305.9,"76":319.2,"75":332.5,"74":345.8,"73":359.1,"72":372.4,"71":385.7,"70":399.0,"69":412.3,"68":425.6,"67":438.9,"66":452.2,"65":465.5},
+            {"TARİFE PAKETLER":"İŞTE SÜPER 4","FİYAT":"1650","85":247.5,"84":264.0,"83":280.5,"82":297.0,"81":313.5,"80":330.0,"79":346.5,"78":363.0,"77":379.5,"76":396.0,"75":412.5,"74":429.0,"73":445.5,"72":462.0,"71":478.5,"70":495.0,"69":511.5,"68":528.0,"67":544.5,"66":561.0,"65":577.5},
+            {"TARİFE PAKETLER":"İŞTE SÜPER 6","FİYAT":"2100","85":315.0,"84":336.0,"83":357.0,"82":378.0,"81":399.0,"80":420.0,"79":441.0,"78":462.0,"77":483.0,"76":504.0,"75":525.0,"74":546.0,"73":567.0,"72":588.0,"71":609.0,"70":630.0,"69":651.0,"68":672.0,"67":693.0,"66":714.0,"65":735.0},
+            {"TARİFE PAKETLER":"İŞTE SÜPER PLATİN 8","FİYAT":"2700","85":405.0,"84":432.0,"83":459.0,"82":486.0,"81":513.0,"80":540.0,"79":567.0,"78":594.0,"77":621.0,"76":648.0,"75":675.0,"74":702.0,"73":729.0,"72":756.0,"71":783.0,"70":810.0,"69":837.0,"68":864.0,"67":891.0,"66":918.0,"65":945.0},
+            {"TARİFE PAKETLER":"İŞTE SÜPER PLATİN 10","FİYAT":"3100","85":465.0,"84":496.0,"83":527.0,"82":558.0,"81":589.0,"80":620.0,"79":651.0,"78":682.0,"77":713.0,"76":744.0,"75":775.0,"74":806.0,"73":837.0,"72":868.0,"71":899.0,"70":930.0,"69":961.0,"68":992.0,"67":1023.0,"66":1054.0,"65":1085.0},
+            {"TARİFE PAKETLER":"İŞTE SÜPER PLATİN 15","FİYAT":"3900","85":585.0,"84":624.0,"83":663.0,"82":702.0,"81":741.0,"80":780.0,"79":819.0,"78":858.0,"77":897.0,"76":936.0,"75":975.0,"74":1014.0,"73":1053.0,"72":1092.0,"71":1131.0,"70":1170.0,"69":1209.0,"68":1248.0,"67":1287.0,"66":1326.0,"65":1365.0},
+            {"TARİFE PAKETLER":"İŞTE SÜPER PLATİN 20","FİYAT":"4300","85":645.0,"84":688.0,"83":731.0,"82":774.0,"81":817.0,"80":860.0,"79":903.0,"78":946.0,"77":989.0,"76":1032.0,"75":1075.0,"74":1118.0,"73":1161.0,"72":1204.0,"71":1247.0,"70":1290.0,"69":1333.0,"68":1376.0,"67":1419.0,"66":1462.0,"65":1505.0},
+            {"TARİFE PAKETLER":"İŞTE SÜPER PLATİN BLACK 30","FİYAT":"5050","85":757.5,"84":808.0,"83":858.5,"82":909.0,"81":959.5,"80":1010.0,"79":1060.5,"78":1111.0,"77":1161.5,"76":1212.0,"75":1262.5,"74":1313.0,"73":1363.5,"72":1414.0,"71":1464.5,"70":1515.0,"69":1565.5,"68":1616.0,"67":1666.5,"66":1717.0,"65":1767.5},
+            {"TARİFE PAKETLER":"İŞTE SÜPER PLATİN BLACK 50","FİYAT":"7200","85":1080.0,"84":1152.0,"83":1224.0,"82":1296.0,"81":1368.0,"80":1440.0,"79":1512.0,"78":1584.0,"77":1656.0,"76":1728.0,"75":1800.0,"74":1872.0,"73":1944.0,"72":2016.0,"71":2088.0,"70":2160.0,"69":2232.0,"68":2304.0,"67":2376.0,"66":2448.0,"65":2520.0},
+            {"TARİFE PAKETLER":"İŞTE SÜPER PLATİN BLACK 100","FİYAT":"8400","85":1260.0,"84":1344.0,"83":1428.0,"82":1512.0,"81":1596.0,"80":1680.0,"79":1764.0,"78":1848.0,"77":1932.0,"76":2016.0,"75":2100.0,"74":2184.0,"73":2268.0,"72":2352.0,"71":2436.0,"70":2520.0,"69":2604.0,"68":2688.0,"67":2772.0,"66":2856.0,"65":2940.0},
+            {"TARİFE PAKETLER":"İŞTE SÜPER PLATİN BLACK 150","FİYAT":"9300","85":1395.0,"84":1488.0,"83":1581.0,"82":1674.0,"81":1767.0,"80":1860.0,"79":1953.0,"78":2046.0,"77":2139.0,"76":2232.0,"75":2325.0,"74":2418.0,"73":2511.0,"72":2604.0,"71":2697.0,"70":2790.0,"69":2883.0,"68":2976.0,"67":3069.0,"66":3162.0,"65":3255.0},
+            {"TARİFE PAKETLER":"LİFECELL 5GB","FİYAT":"745","85":111.75,"84":119.2,"83":126.65,"82":134.1,"81":141.55,"80":149.0,"79":156.45,"78":163.9,"77":171.35,"76":178.8,"75":186.25,"74":193.7,"73":201.15,"72":208.6,"71":216.05,"70":223.5,"69":230.95,"68":238.4,"67":245.85,"66":253.3,"65":260.75},
+            {"TARİFE PAKETLER":"LİFECELL 10GB","FİYAT":"1000","85":150.0,"84":160.0,"83":170.0,"82":180.0,"81":190.0,"80":200.0,"79":210.0,"78":220.0,"77":230.0,"76":240.0,"75":250.0,"74":260.0,"73":270.0,"72":280.0,"71":290.0,"70":300.0,"69":310.0,"68":320.0,"67":330.0,"66":340.0,"65":350.0},
+            {"TARİFE PAKETLER":"LİFECELL 15GB","FİYAT":"1135","85":170.25,"84":181.6,"83":192.95,"82":204.3,"81":215.65,"80":227.0,"79":238.35,"78":249.7,"77":261.05,"76":272.4,"75":283.75,"74":295.1,"73":306.45,"72":317.8,"71":329.15,"70":340.5,"69":351.85,"68":363.2,"67":374.55,"66":385.9,"65":397.25},
+            {"TARİFE PAKETLER":"LİFECELL 25GB","FİYAT":"1400","85":210.0,"84":224.0,"83":238.0,"82":252.0,"81":266.0,"80":280.0,"79":294.0,"78":308.0,"77":322.0,"76":336.0,"75":350.0,"74":364.0,"73":378.0,"72":392.0,"71":406.0,"70":420.0,"69":434.0,"68":448.0,"67":462.0,"66":476.0,"65":490.0},
+            {"TARİFE PAKETLER":"LİFECELL 50GB","FİYAT":"2000","85":300.0,"84":320.0,"83":340.0,"82":360.0,"81":380.0,"80":400.0,"79":420.0,"78":440.0,"77":460.0,"76":480.0,"75":500.0,"74":520.0,"73":540.0,"72":560.0,"71":580.0,"70":600.0,"69":620.0,"68":640.0,"67":660.0,"66":680.0,"65":700.0},
+            {"TARİFE PAKETLER":"LİFECELL 100GB","FİYAT":"2930","85":439.5,"84":468.8,"83":498.1,"82":527.4,"81":556.7,"80":586.0,"79":615.3,"78":644.6,"77":673.9,"76":703.2,"75":732.5,"74":761.8,"73":791.1,"72":820.4,"71":849.7,"70":879.0,"69":908.3,"68":937.6,"67":966.9,"66":996.2,"65":1025.5},
+            {"TARİFE PAKETLER":"İŞTE TARİFE","FİYAT":"60","85":51.0,"84":50.4,"83":49.8,"82":49.2,"81":48.6,"80":48.0,"79":47.4,"78":46.8,"77":46.2,"76":45.6,"75":45.0,"74":44.4,"73":43.8,"72":43.2,"71":42.6,"70":42.0,"69":41.4,"68":40.8,"67":40.2,"66":39.6,"65":39.0},
+            {"TARİFE PAKETLER":"STANDART ARAÇ","FİYAT":"99","85":84.15,"84":83.16,"83":82.17,"82":81.18,"81":80.19,"80":79.2,"79":78.21,"78":77.22,"77":76.23,"76":75.24,"75":74.25,"74":73.26,"73":72.27,"72":71.28,"71":70.29,"70":69.3,"69":68.31,"68":67.32,"67":66.33,"66":65.34,"65":64.35}
+        ];
+
+        const t2_tarifeSelect = document.getElementById('tarife');
+        const t2_pctSlider = document.getElementById('pctSlider');
+        const t2_pctLabel = document.getElementById('pctValue');
+        const t2_finalPriceDisplay = document.getElementById('finalPrice');
+        const t2_basePriceLabel = document.getElementById('basePriceLabel');
+
+        let t2_defaultOption = document.createElement('option');
+        t2_defaultOption.value = "";
+        t2_defaultOption.text = "Lütfen Bir Tarife Seçin...";
+        t2_tarifeSelect.appendChild(t2_defaultOption);
+
+        t2_data.forEach((item, index) => {
+            let option = document.createElement('option');
+            option.value = index;
+            option.text = item['TARİFE PAKETLER'];
+            t2_tarifeSelect.appendChild(option);
+        });
+
+        function t2_updatePctLabel() {
+            t2_pctLabel.innerText = t2_pctSlider.value;
+        }
+
+        function t2_calculate() {
+            const selectedIndex = t2_tarifeSelect.value;
+            if(selectedIndex === "") {
+                t2_basePriceLabel.innerText = "Lütfen listeden tarife seçiniz.";
+                t2_finalPriceDisplay.innerText = "0.00 TL";
+                return;
+            }
+            const selectedPct = t2_pctSlider.value;
+            const selectedData = t2_data[parseInt(selectedIndex)];
+            const price = selectedData[selectedPct];
+            const basePrice = selectedData['FİYAT'];
+
+            t2_basePriceLabel.innerText = "Paket Liste Fiyatı: " + basePrice + " TL";
+            t2_finalPriceDisplay.innerText = Number(price).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " TL";
+        }
+        t2_calculate();
+
+        // --- TAB 3: LİSTE MANTIĞI ---
+        function t3_toggleMenu(id) {
+            var content = document.getElementById(id);
+            var allContents = document.getElementsByClassName("t3-acc-content");
+            
+            for (var i = 0; i < allContents.length; i++) {
+                if (allContents[i].id !== id) {
+                    allContents[i].style.display = "none";
+                }
+            }
+            
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+        }
+
+        // --- TAB 4 (YENİ EKLENEN): İNDİRİM ORANI HESAPLAMA MANTIĞI ---
+        const t4_tarifeInput = document.getElementById('t4-tarife');
+        const t4_indirimInput = document.getElementById('t4-indirim');
+        const t4_sonucDiv = document.getElementById('t4-sonuc');
+
+        function t4_hesapla() {
+            const tarife = parseFloat(t4_tarifeInput.value);
+            const indirim = parseFloat(t4_indirimInput.value);
+
+            if (tarife > 0 && indirim >= 0) {
+                let oran = (indirim / tarife) * 100;
+                if(oran > 100) oran = 100; 
+                t4_sonucDiv.innerText = "% " + oran.toFixed(2);
+            } else {
+                t4_sonucDiv.innerText = "% 0.00";
+            }
+        }
+
+        t4_tarifeInput.addEventListener('input', t4_hesapla);
+        t4_indirimInput.addEventListener('input', t4_hesapla);
+    </script>
+</body>
+</html>
